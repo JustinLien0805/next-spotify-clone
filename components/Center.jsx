@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import { ChevronDownIcon } from "@heroicons/react/outline";
+import { useSession, signOut } from "next-auth/react";
+import { ChevronDownIcon, LogoutIcon } from "@heroicons/react/outline";
 import { shuffle } from "lodash";
+import { useRecoilValue, useRecoilState } from "recoil";
+import { playlistIdState, playlistState } from "../atoms/playlistAtom";
+import Songs from "./Songs";
+import useSpotify from "../hooks/useSpotify";
 const colors = [
   "from-red-500",
   "from-emerald-500",
@@ -15,17 +19,36 @@ const colors = [
 
 const Center = () => {
   const { data: session } = useSession();
+  const spotifyApi = useSpotify();
   const [color, setColor] = useState(null);
-  console.log(session);
+  const playlistId = useRecoilValue(playlistIdState);
+  const [playlist, setPlaylist] = useRecoilState(playlistState);
+  const [isActive, setActive] = useState("false");
 
   useEffect(() => {
     setColor(shuffle(colors).pop());
-  }, []);
+  }, [playlistId]);
+
+  useEffect(() => {
+    spotifyApi
+      .getPlaylist(playlistId)
+      .then((data) => {
+        setPlaylist(data.body);
+      })
+      .catch((err) => {
+        console.log("Something went wrong!", err);
+      });
+  }, [spotifyApi, playlistId]);
+
+  const handleToggle = () => {
+    setActive(!isActive);
+  };
+
   return (
-    <div className="flex-grow text-white">
-      <header className="absolute top-5 right-8">
+    <div className="flex-grow text-white h-screen overflow-y-scroll">
+      <header className="absolute top-5 right-8" onClick={handleToggle}>
         <div
-          className="flex items-center  bg-red-300 space-x-3 opacity-90
+          className="flex items-center  bg-black space-x-3 opacity-90
          hover:opacity-80 cursor-pointer rounded-full p-1 pr-2"
         >
           <svg
@@ -46,13 +69,40 @@ const Center = () => {
           <ChevronDownIcon className="h-5 w-5" />
         </div>
       </header>
-
+      <div
+        className={
+          `h-10 w-52 rounded-sm bg-[#2e2e2e] text-white absolute right-8 top-[4.3rem] flex-col` +
+          " " +
+          `${isActive ? "hidden" : "flex"}`
+        }
+      >
+        <div
+          className="flex items-center justify-between cursor-pointer px-3 py-2"
+          onClick={signOut}
+        >
+          <p className="hover:bg-[#2b2d30]">Log out</p>
+          <LogoutIcon className="w-5 h-5" />
+        </div>
+      </div>
       <section
         className={`flex items-end space-x-7 bg-gradient-to-b
        to-black ${color} h-80 text-white p-8`}
       >
-        <h1>hello</h1>
+        <img
+          src={playlist?.images?.[0]?.url}
+          alt=""
+          className="h-44 w-44 shadow-2xl"
+        />
+        <div>
+          <p>PLAYLIST</p>
+          <h1 className="text-2xl md:text-3xl xl:text-5xl font-bold">
+            {playlist?.name}
+          </h1>
+        </div>
       </section>
+      <div>
+        <Songs />
+      </div>
     </div>
   );
 };
