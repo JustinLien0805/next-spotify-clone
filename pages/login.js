@@ -3,11 +3,11 @@ import { getProviders, signIn } from "next-auth/react";
 const login = ({ providers }) => {
   return (
     <div className="flex flex-col items-center bg-black min-h-screen w-full justify-center">
-      <img src="https://links.papareact.com/9xl" alt="" className="w-52 mb-5" />
+      <h1 className="text-white m-5 text-[10rem] font-bold">SPOTIFY</h1>
       {Object.values(providers).map((provider) => (
         <div key={provider.name}>
           <button
-            className="bg-[#18D860] text-white p-5 rounded-full"
+            className="border-[#18d860] text-white p-5 rounded-full font-bold border-2"
             onClick={() => {
               signIn(provider.id, { callbackUrl: "/" });
             }}
